@@ -453,10 +453,12 @@ function ResourceHistoryChart({
 function ProcessTreeName({
   process,
   collapsed,
+  hiddenCount,
   onToggle,
 }: {
   process: ResourceTelemetryProcess;
   collapsed: boolean;
+  hiddenCount: number;
   onToggle: (process: ResourceTelemetryProcess) => void;
 }) {
   const name = formatProcessName(process);
@@ -479,14 +481,30 @@ function ProcessTreeName({
         <span className="size-5" aria-hidden />
       )}
       <span className={cn("size-1.5 rounded-full", categoryDotClass(process.category))} />
-      <Tooltip>
-        <TooltipTrigger
-          render={<span className="min-w-0 truncate font-medium text-foreground">{name}</span>}
-        />
-        <TooltipPopup side="top" variant="code">
-          {process.command || process.name}
-        </TooltipPopup>
-      </Tooltip>
+      <span className="flex min-w-0 items-center gap-1.5">
+        <Tooltip>
+          <TooltipTrigger
+            render={<span className="min-w-0 truncate font-medium text-foreground">{name}</span>}
+          />
+          <TooltipPopup side="top" variant="code">
+            {process.command || process.name}
+          </TooltipPopup>
+        </Tooltip>
+        {hiddenCount > 0 ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="shrink-0 font-mono text-muted-foreground tabular-nums">
+                  ({hiddenCount})
+                </span>
+              }
+            />
+            <TooltipPopup side="top">
+              Includes {hiddenCount} hidden {hiddenCount === 1 ? "process" : "processes"}
+            </TooltipPopup>
+          </Tooltip>
+        ) : null}
+      </span>
     </div>
   );
 }
@@ -593,12 +611,13 @@ function ProcessTable({
                 </td>
               </tr>
             ) : null}
-            {visible.map((process) => (
+            {visible.map(({ process, hiddenCount }) => (
               <tr key={processIdentityKey(process)} className="hover:bg-muted/20">
                 <td className="px-4 py-2 sm:pl-5">
                   <ProcessTreeName
                     process={process}
                     collapsed={collapsed.has(processIdentityKey(process))}
+                    hiddenCount={hiddenCount}
                     onToggle={toggle}
                   />
                 </td>
